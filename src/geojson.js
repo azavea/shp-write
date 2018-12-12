@@ -5,8 +5,13 @@ module.exports.polygon = justType('Polygon', 'POLYGON');
 function justType(type, TYPE) {
     return function(gj) {
         var oftype = gj.features.filter(isType(type));
+
+        var geometries = TYPE === 'POLYLINE'
+            ? oftype.map(function(t) { return [justCoords(t)]; })
+            : oftype.map(justCoords);
+
         return {
-            geometries: (TYPE === 'POLYGON' || TYPE === 'POLYLINE') ? [oftype.map(justCoords)] : oftype.map(justCoords),
+            geometries: geometries,
             properties: oftype.map(justProps),
             type: TYPE
         };
@@ -14,13 +19,7 @@ function justType(type, TYPE) {
 }
 
 function justCoords(t) {
-    if (t.geometry.coordinates[0] !== undefined &&
-        t.geometry.coordinates[0][0] !== undefined &&
-        t.geometry.coordinates[0][0][0] !== undefined) {
-        return t.geometry.coordinates[0];
-    } else {
-        return t.geometry.coordinates;
-    }
+    return t.geometry.coordinates;
 }
 
 function justProps(t) {
@@ -28,5 +27,5 @@ function justProps(t) {
 }
 
 function isType(t) {
-    return function(f) { return f.geometry.type === t; };
+    return function(f) { return f.geometry.type.replace('Multi', '') === t; };
 }
